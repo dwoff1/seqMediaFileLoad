@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<header>
+	<title> Sequential Media File loader </title>
+	<h1> Sequential Media File loader </h1>
+	</h2> With pseudo time recognition </h2>
+	<style>
+	header 
+	{
+		background: linear-gradient(to left, #acd1e0, #2e657c); 
+		text-align: center; 
+		min-width: 32em;
+	}
+	</style>
+</header>
+<body>
+		<h4> Please enter the below details </h4>
+	<select id='ftype' autofocus style="background: #c9bfc1;">
+		<option value="Video">Video</option>
+		<option value="Image">Image</option>
+	</select> type of media
+	<br>
+	<input id="URLStart" type="text" value="URL Start"> ie www.example.com/media/mp3/bgm <br>
+	<input id="URLEnd" type="text" value="URL end"> ie .mp3 <br>
+	<input id="fsn" type="number" value="1"> First sequential number <br>
+	<input id="lsn" type="number" value="3"> Last sequential number <br>
+	<input id="ci" type="number" value="15000"> Check interval <br>
+	<input type='button' onclick='clearTimeout(activetimeout)' value='clear interval'>
+	<input type="button" value="GO" onclick="startGUI()"> <br>
+	<video src=""  onerror='this.style.display = "none"' controls></video>
+	<img src=""  onerror='this.style.display = "none"' controls/>
+	<h3> Ideas </h3>
+	<p> List of known host/sizes on rhs (click load) <br>
+	Change a single video to a audio + video <br>
+	A status bar ie 1 line (waiting for check, starting new run, etc)</p>
+	<script>
+		var da = ""; //date storage 
+		var vido; //video object
+		var x = 0; //the int for url's it should try to open (starting at 0 (default)
+		var midIntP = 0; //midIntPersistant
+		var maxMidInt = 2; //max sequential files to try
+		var intervalx = 30000; //use 30seconds as default
+		var neww = ""; //store the new window
+		var startURL = "";// ie www.example.com/media/mp3/
+		var endURL =""; //ie .mp3
+		var gui = true;
+		var ftype= "Video"; //file type
+		var activetimeout = -1;
+		var errorCount = 0;
+		var loopM = false;
+		var debug = true;
+		//GUI entry
+		function  startGUI()
+		{
+			startURL = document.getElementById('URLStart').value; //ie example.com/media/mp3
+			endURL = document.getElementById('URLEnd').value; //ie .mp3
+			x = document.getElementById('fsn').value; //ie 1
+			midIntP = x; //used for loopings
+			intervalx = document.getElementById('ci').value; //ie 15000 (the tick rate in ms)
+			maxMidInt = document.getElementById('lsn').value; //ie 5 (becoming if(1 < 5)....
+			ftype = document.getElementById('ftype').value;
+			loadfGUI(); //start process
+		}
+		//program entry point
+		function  start(starturl, endUrl, midInt, maxMid, intervalSize, loop)
+		{
+			gui = false;
+			startURL = starturl; //ie example.com/media/mp3
+			endURL = endUrl; //ie .mp3
+			x = midInt; //ie 1
+			midIntP = x;
+			intervalx = intervalSize; //ie 15000 (the tick rate in ms)
+			maxMidInt = maxMid; //ie 5 (becoming if(1 < 5)....
+			loopM = loop; //boolean to check if loop ie 0,1,2,0,1...
+			loadf(); //start process
+		}
+		function loadf()
+		{
+			if(debug)
+			{
+				console.log(vido);
+				console.log()
+			}
+			da = new Date();
+			console.log('loadf entered ' + (da.getHours()-12) + ":" + da.getMinutes());
+			if(x <= maxMidInt)
+			{   
+				try{neww.close();}catch{}
+				var completeURL = startURL.concat(x);
+				neww = window.open(completeURL.concat(endURL), '_blank');
+				x++;
+				//vido = neww.document.getElementsByTagName('video')[0];
+				console.log('going to wait ' + intervalx);
+				if(ftype == "Video")
+					activetimeout = setTimeout(check, intervalx);
+				else
+					activetimeout = setTimeout(loadf, intervalx);
+			} 
+			else
+			{
+				if(loopM == true)
+				{
+					x = midIntP;
+					loadf();
+				}
+			}
+		}
+		function loadfGUI()
+		{
+			da = new Date();
+			console.log('loadfGUI entered ' + (da.getHours()-12) + ":" + da.getMinutes());
+			if(x <= maxMidInt)
+			{    
+				var completeURL = startURL.concat(x);
+				neww = window;
+				switch(ftype)
+				{
+					case "Video": //video or audio
+							vido = document.getElementsByTagName('video')[0];
+							vido.src = completeURL.concat(endURL);
+							vido.style.display='block';
+							vido.play();
+							console.log('going to wait ' + intervalx);
+							activetimeout = setTimeout(check, intervalx);    
+						break;
+					case "Image": //images
+							vido = document.getElementsByTagName('img')[0];
+							vido.src = completeURL.concat(endURL);
+							vido.style.display='block';
+							activetimeout = setTimeout(loadfGUI, intervalx);
+						break;
+					default: console.warn('unable to determine type of file');
+				}
+				x++;
+			}
+		}
+		function check()
+		{
+			vido = neww.document.getElementsByTagName('video')[0];
+			console.log('check entered');
+			if(vido.currentTime < vido.duration)
+			{
+				console.log('subwait');
+				setTimeout(check, intervalx/2); //assume after first minute passed increase likelyhood vid will end in 30 seconds.
+				return 0;
+			}
+			else
+			{
+				console.log('subwait over at' + (da.getHours()-12) + ":" + da.getMinutes());
+				console.log('new run coming');
+				//loadf();
+				if(gui)
+					return loadfGUI();
+				else
+					return loadf();
+			}
+		}
+	</script>
+</body>
+</html>
+		
